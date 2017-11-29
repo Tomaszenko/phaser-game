@@ -5,6 +5,10 @@
 	margin: auto;
 }
 
+canvas {
+	display: block;
+	margin: auto;
+}
 
 body {
 	height: 100vh;
