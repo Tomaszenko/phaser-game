@@ -126,32 +126,52 @@ $(document).ready(()=> {
             game.boxes = game.add.group();
             game.coins = game.add.group();
             game.treasures = game.add.group();
-    
-            game.layer.enableBody = true;
-            game.balls.enableBody = true;
-            game.boxes.enableBody = true
-            game.coins.enableBody = true;
-            game.treasures.enableBody = true;
-
 
             // game.boxes.create(64,128, 'box');
             // game.coins.create(64,192, 'coin');
             // game.treasures.create(64, 256, 'treasure');
 
-            game.physics.startSystem(Phaser.Physics.ARCADE);
+            game.physics.startSystem(Phaser.Physics.P2JS);
 
-            game.physics.setBoundsToWorld();
+            game.physics.p2.restitution = 0.8;
+            game.physics.p2.convertTilemap(game.map, game.layer);
+            game.physics.p2.setBoundsToWorld(true, true, true, true, false);
+
+            var playerCollisionGroup = game.physics.p2.createCollisionGroup();
+            var layerCollisionGroup = game.physics.p2.createCollisionGroup();
+            var boxesCollisionGroup = game.physics.p2.createCollisionGroup();
+            var coinsCollisionGroup = game.physics.p2.createCollisionGroup();
+            var treasuresCollisionGroup = game.physics.p2.createCollisionGroup();
+            var ballsCollisionGroup = game.physics.p2.createCollisionGroup();
+
+            game.physics.p2.updateBoundsCollisionGroup();
+            game.balls.physicsBodyType = Phaser.Physics.P2JS;
+
+            // game.physics.setBoundsToWorld();
 
             game.map.setCollisionBetween(1, 1, true, game.layer);
 
             game.player = game.add.sprite(64, 64, 'herosheet');
 
-            game.physics.arcade.enable(game.player);
-            game.physics.arcade.enable(game.layer);
-            game.physics.arcade.enable(game.boxes);
-            game.physics.arcade.enable(game.coins);
-            game.physics.arcade.enable(game.treasures);
-            game.physics.arcade.enable(game.balls);
+            game.layer.enableBody = true;
+            game.balls.enableBody = true;
+            game.boxes.enableBody = true
+            game.coins.enableBody = true;
+            game.player.enableBody = true;
+            game.treasures.enableBody = true;
+
+            game.physics.p2.enable(game.player);
+            // game.physics.p2.enable(game.layer);
+            game.physics.p2.enable(game.boxes);
+            game.physics.p2.enable(game.coins);
+            game.physics.p2.enable(game.treasures);
+            game.physics.p2.enable(game.balls);            
+            // game.physics.arcade.enable(game.player);
+            // game.physics.arcade.enable(game.layer);
+            // game.physics.arcade.enable(game.boxes);
+            // game.physics.arcade.enable(game.coins);
+            // game.physics.arcade.enable(game.treasures);
+            // game.physics.arcade.enable(game.balls);
 
             game.cursors = game.input.keyboard.createCursorKeys();
 
@@ -164,10 +184,9 @@ $(document).ready(()=> {
             game.player.animations.add('push_left', [6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7]); // klatki 2-3 dla wyświetlania gdy gracz porusza się w prawo
             game.player.animations.add('push_right', [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3]); // klatki 2-3 dla wyświetlania gdy gracz porusza się w prawo
             
-            game.player.body.setSize(28, 56, 18, 4);
+            game.player.body.setRectangle(28, 56, 18, 4);
 
-
-            game.camera.follow(game.player);
+            game.player.body.fixedRotation = true;
 
             console.log("Ball generation");
             leftUpTiles.forEach((tile)=> {
@@ -227,13 +246,13 @@ $(document).ready(()=> {
             game.balls.forEach(elem=>elem.animations.add('vertical', [0, 2]));
 
             game.balls.forEach(elem=>elem.body.setCircle(32));
-            game.balls.forEach(elem=>elem.body.bounce.set(1));
-
             game.coins.forEach(elem=>elem.body.setCircle(7, 25, 25));
 
             // game.boxes.body.bounce.set(0.2);
 
             game.player.checkWorldBounds = true;
+
+            game.camera.follow(game.player);
             // game.player.body.collideWorldBounds = true;
 
             console.log(game.world.bounds.width);
@@ -259,21 +278,21 @@ $(document).ready(()=> {
 
             game.debug.text("Points: " + points, 32, 32);
 
-            if(game.player.x > game.world.width - tilesize/2 || game.player.x < tilesize/2 || game.player.y > game.world.height - tilesize/2 || game.player.y < tilesize/2) {
-                this.win();
-            }
+            // if(game.player.x > game.world.width - tilesize/2 || game.player.x < tilesize/2 || game.player.y > game.world.height - tilesize/2 || game.player.y < tilesize/2) {
+            //     this.win();
+            // }
 
             // console.log(game.ball.body.velocity);
 
-            game.physics.arcade.collide(game.player, game.layer);
-            game.physics.arcade.collide(game.balls, game.layer);
-            game.physics.arcade.collide(game.boxes, game.layer);
-            game.physics.arcade.collide(game.balls, this.gameover);
+            // game.physics.arcade.collide(game.player, game.layer);
+            // game.physics.arcade.collide(game.balls, game.layer);
+            // game.physics.arcade.collide(game.boxes, game.layer);
+            // game.physics.arcade.collide(game.balls, this.gameover);
             // game.physics.arcade.collide(game.player, game.boxes);
             // game.physics.arcade.collide(game.balls, game.boxes, this.bounceBall);
-            game.physics.arcade.collide(game.balls, game.player, this.gameover);
-            game.physics.arcade.collide(game.player, game.coins, this.pickCoin);
-            game.physics.arcade.collide(game.player, game.treasures, this.pickTreasure);
+            // game.physics.arcade.collide(game.balls, game.player, this.gameover);
+            // game.physics.arcade.collide(game.player, game.coins, this.pickCoin);
+            // game.physics.arcade.collide(game.player, game.treasures, this.pickTreasure);
             // game.physics.arcade.overlap(game.ball, game.boxes, this.bounceBall);
 
             if(game.cursors.left.isDown) {
@@ -284,8 +303,9 @@ $(document).ready(()=> {
                 // game.balls.animations.play('vertical');
                 // game.ball.body.velocity.x = 0;
                 // game.ball.body.velocity.y = -64;
-                game.player.body.velocity.x = -64; // korzystanie z animacji
-                game.player.body.velocity.y = 0;
+                game.player.body.velocity.x = -64;
+                game.player.body.velocity.y = 0; // korzystanie z animacji
+                // game.player.body.velocity.y = 0;
             } else {
                 if(game.cursors.right.isDown) {
                     game.player.animations.play('right');
