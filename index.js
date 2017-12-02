@@ -52,12 +52,17 @@ $(document).ready(()=> {
         },
 
         pickCoin: function(player, coin) {
+            console.log("player collects coin");
+            game.coins.remove(coin.sprite);
             coin.destroy();
+            coin = null;
             points += 1;
         },
 
         pickTreasure: function(player, treasure) {
+            game.treasures.remove(treasure.sprite);
             treasure.destroy();
+            treasure = null;
             points += 5;
         },
         
@@ -102,6 +107,8 @@ $(document).ready(()=> {
 
             game.physics.p2.restitution = 1;
             game.physics.p2.setBoundsToWorld(true, true, true, true, false);
+            game.physics.p2.setImpactEvents(true);
+
 
             game.playerCollisionGroup = game.physics.p2.createCollisionGroup();
             game.layerCollisionGroup = game.physics.p2.createCollisionGroup();
@@ -221,10 +228,10 @@ $(document).ready(()=> {
                     ball.body.restitution = 1;
                 }
                 if(Math.random() < 0.01) {
-                    let coin = game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
+                    let coin = game.coins.create(tile.x*tilesize + tilesize/2, tile.y*tilesize + tilesize/2, 'coin');
                 }
                 if(Math.random() < 0.005) {
-                    let treasure = game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
+                    let treasure = game.treasures.create(tile.x*tilesize + tilesize/2, tile.y*tilesize + tilesize/2, 'treasure');
                 }
             });
 
@@ -235,10 +242,10 @@ $(document).ready(()=> {
                     ball.body.restitution = 1;
                 }
                 if(Math.random() < 0.02) {
-                    let coin = game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
+                    let coin = game.coins.create(tile.x*tilesize + tilesize/2, tile.y*tilesize + tilesize/2, 'coin');
                 }
                 if(Math.random() < 0.01) {
-                    let treasure = game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
+                    let treasure = game.treasures.create(tile.x*tilesize + tilesize/2, tile.y*tilesize + tilesize/2, 'treasure');
                 }
             });
 
@@ -249,10 +256,10 @@ $(document).ready(()=> {
                     ball.body.restitution = 1;
                 }
                 if(Math.random() < 0.02) {
-                    let coin = game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
+                    let coin = game.coins.create(tile.x*tilesize + tilesize/2, tile.y*tilesize + tilesize/2, 'coin');
                 }
                 if(Math.random() < 0.01) {
-                    let treasure = game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
+                    let treasure = game.treasures.create(tile.x*tilesize + tilesize/2, tile.y*tilesize + tilesize/2, 'treasure');
                 }
             });
 
@@ -263,18 +270,19 @@ $(document).ready(()=> {
                     ball.body.restitution = 1;
                 }
                 if(Math.random() < 0.05) {
-                    let coin = game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
+                    let coin = game.coins.create(tile.x*tilesize + tilesize/2, tile.y*tilesize + tilesize/2, 'coin');
                 }
                 if(Math.random() < 0.02) {
-                    let treasure = game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
+                    let treasure = game.treasures.create(tile.x*tilesize + tilesize/2, tile.y*tilesize + tilesize/2, 'treasure');
                 }
             });
+            game.physics.p2.updateBoundsCollisionGroup();
 
             game.player.body.setCollisionGroup(game.playerCollisionGroup);
 
 
             game.balls.forEach(elem=>elem.body.setCircle(32));
-            game.coins.forEach(elem=>elem.body.setCircle(7, 25, 25));
+            game.coins.forEach(elem=>elem.body.setCircle(7, 0, 0));
 
             game.balls.forEach(elem=>{
                 elem.body.setCollisionGroup(game.ballsCollisionGroup);
@@ -284,14 +292,26 @@ $(document).ready(()=> {
                 // elem.body.collides([game.ballsCollisionGroup, game.playerCollisionGroup]);
             });
 
-            game.player.body.collides([game.layerCollisionGroup, game.ballsCollisionGroup]);
+            game.coins.forEach(elem=>{
+                elem.body.setCollisionGroup(game.coinsCollisionGroup);
+                elem.body.collides([game.playerCollisionGroup]);
+            });
+
+            game.treasures.forEach(elem=>{
+                elem.body.setCollisionGroup(game.treasuresCollisionGroup);
+                elem.body.collides([game.playerCollisionGroup]);
+            });
+
+            game.player.body.collides([game.layerCollisionGroup, game.ballsCollisionGroup, game.coinsCollisionGroup, game.treasuresCollisionGroup]);
+
+            game.player.body.createGroupCallback(game.coinsCollisionGroup, this.pickCoin);
+            // game.player.body.collides(game.coinsCollisionGroup, pickCoin, this);
+            game.player.body.createGroupCallback(game.treasuresCollisionGroup, this.pickTreasure);
 
             game.balls.forEach(elem=>elem.animations.add('horizontal', [0, 1]));
             game.balls.forEach(elem=>elem.animations.add('vertical', [0, 2]));
 
-            game.coins.forEach(elem=>elem.body.setCollisionGroup(game.coinsCollisionGroup));
-            // game.balls.forEach(elem=>elem.body.setCollisionGroup(ballsCollisionGroup));
-            game.treasures.forEach(elem=>elem.body.setCollisionGroup(game.treasuresCollisionGroup));
+
             // game.wallTiles.forEach(elem=>{
             //     elem.body.setCollisionGroup(layerCollisionGroup);
             //     elem.body.collides([playerCollisionGroup, ballsCollisionGroup]);
@@ -300,7 +320,7 @@ $(document).ready(()=> {
 
             // game.boxes.body.bounce.set(0.2);
 
-            // game.player.checkWorldBounds = true;
+            game.player.checkWorldBounds = true;
 
             game.camera.follow(game.player);
             // game.player.body.collideWorldBounds = true;
