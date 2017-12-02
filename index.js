@@ -90,9 +90,7 @@ $(document).ready(()=> {
         },
         create: function() {
 
-            points = 0;
-
-            setTimeout(this.increaseSpeed, 15000);
+            let points = 0;
 
             game.map = game.add.tilemap('map');
             game.map.addTilesetImage('core_layer', 'core_layer');
@@ -103,22 +101,20 @@ $(document).ready(()=> {
             game.layer.resizeWorld();
 
             game.physics.p2.restitution = 1;
-            // game.physics.p2.convertCollisionObjects(game.map, "core_layer");
             game.physics.p2.setBoundsToWorld(true, true, true, true, false);
 
-            var playerCollisionGroup = game.physics.p2.createCollisionGroup();
-            var layerCollisionGroup = game.physics.p2.createCollisionGroup();
-            var boxesCollisionGroup = game.physics.p2.createCollisionGroup();
-            var coinsCollisionGroup = game.physics.p2.createCollisionGroup();
-            var treasuresCollisionGroup = game.physics.p2.createCollisionGroup();
-            var ballsCollisionGroup = game.physics.p2.createCollisionGroup();
+            game.playerCollisionGroup = game.physics.p2.createCollisionGroup();
+            game.layerCollisionGroup = game.physics.p2.createCollisionGroup();
+            game.boxesCollisionGroup = game.physics.p2.createCollisionGroup();
+            game.coinsCollisionGroup = game.physics.p2.createCollisionGroup();
+            game.treasuresCollisionGroup = game.physics.p2.createCollisionGroup();
+            game.ballsCollisionGroup = game.physics.p2.createCollisionGroup();
 
-            game.physics.p2.updateBoundsCollisionGroup();
+            // game.physics.p2.updateBoundsCollisionGroup();
 
-            emptyTiles = [];
-            game.wallTiles = game.add.group();
+            let emptyTiles = [];
 
-            console.log("Prinitng tiles");
+            console.log("Printing tiles");
             
             game.balls = game.add.group();
             game.boxes = game.add.group();
@@ -126,7 +122,6 @@ $(document).ready(()=> {
             game.treasures = game.add.group();
             game.player = game.add.sprite(64, 64, 'herosheet');
 
-            game.wallTiles.enableBody = true;
             game.balls.enableBody = true;
             game.boxes.enableBody = true
             game.coins.enableBody = true;
@@ -134,11 +129,12 @@ $(document).ready(()=> {
             game.treasures.enableBody = true;
 
 
-            // game.player.physicsBodyType = Phaser.Physics.P2JS;
+            game.player.physicsBodyType = Phaser.Physics.P2JS;
             game.balls.physicsBodyType = Phaser.Physics.P2JS;
-            game.wallTiles.physicsBodyType = Phaser.Physics.P2JS;
             game.coins.physicsBodyType = Phaser.Physics.P2JS;
             game.treasures.physicsBodyType = Phaser.Physics.P2JS;
+
+            game.physics.p2.enable(game.player);
 
             game.map.setCollisionBetween(1, 1, true, game.layer);
 
@@ -148,17 +144,28 @@ $(document).ready(()=> {
                     emptyTiles.push({"x": tile.x, "y": tile.y});
                 }
                 if(tile.index === 1) {
+                    console.log(tile);
                     // game.physics.p2.enable(tile);
                     // tile.body.setCollisionGroup(layerCollisionGroup);
                     // tile.body.collides([ballsCollisionGroup, playerCollisionGroup]);
                 }
             });
 
-            game.physics.p2.convertTilemap(game.map, game.layer);
+            wallsConverted = game.physics.p2.convertTilemap(game.map, game.layer);
+            for(let i=0; i!==wallsConverted.length; i++) {
+                let wallsLayerBody = wallsConverted[i];
+                // game.physics.p2.enable(wallsLayerBody);
+                console.log(wallsLayerBody);
+                // console.log(wallsLayerBody.x);
+                console.log("("+wallsLayerBody.x.toString()+ "," + wallsLayerBody.y.toString() +")");
+                wallsLayerBody.setCollisionGroup(game.layerCollisionGroup);
+                wallsLayerBody.collides([game.playerCollisionGroup, game.ballsCollisionGroup]);
+                // wallsLayerBody.collides(ballsCollisionGroup);
+            }
+
+            game.physics.p2.updateBoundsCollisionGroup();
 
             console.log(emptyTiles);
-
-            // wallTiles.setCollisionGroup(layerCollisionGroup);
 
             leftUpTiles = emptyTiles.filter((tile)=>tile.x < tilesHoriz/2 && tile.y < tilesVert/2);
             rightUpTiles = emptyTiles.filter((tile)=>tile.x >= tilesHoriz/2 && tile.y < tilesVert/2);
@@ -172,15 +179,9 @@ $(document).ready(()=> {
 
             console.log(game.world);
 
-
-            // game.boxes.create(64,128, 'box');
-            // game.coins.create(64,192, 'coin');
-            // game.treasures.create(64, 256, 'treasure');
-
-
-            game.physics.p2.enable(game.player);
-
-            game.player.body.setCollisionGroup(playerCollisionGroup);
+            game.player.body.setRectangle(28,56,0,0);
+            // game.player.body.collides(layerCollisionGroup);
+            // game.player.body.collides([game.ballsCollisionGroup]);
 
             game.physics.p2.updateBoundsCollisionGroup();
 
@@ -194,15 +195,8 @@ $(document).ready(()=> {
 
             console.log(game.player.body);
 
-            game.player.body.collides([layerCollisionGroup, ballsCollisionGroup]);
 
 
-            // game.physics.arcade.enable(game.player);
-            // game.physics.arcade.enable(game.layer);
-            // game.physics.arcade.enable(game.boxes);
-            // game.physics.arcade.enable(game.coins);
-            // game.physics.arcade.enable(game.treasures);
-            // game.physics.arcade.enable(game.balls);
 
             game.cursors = game.input.keyboard.createCursorKeys();
 
@@ -215,7 +209,7 @@ $(document).ready(()=> {
             game.player.animations.add('push_left', [6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7]); // klatki 2-3 dla wyświetlania gdy gracz porusza się w prawo
             game.player.animations.add('push_right', [2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3]); // klatki 2-3 dla wyświetlania gdy gracz porusza się w prawo
             
-            game.player.body.setRectangle(28, 56, 18, 4);
+            // game.player.body.setRectangle(28, 56, 18, 4);
 
             game.player.body.fixedRotation = true;
 
@@ -276,28 +270,37 @@ $(document).ready(()=> {
                 }
             });
 
-            game.balls.forEach(elem=>{
-                elem.body.setCollisionGroup(ballsCollisionGroup);
-                elem.body.velocity.x = Math.random()*128 - 64;
-                elem.body.velocity.y = Math.random()*128 - 64;
-                elem.body.collides([ballsCollisionGroup, playerCollisionGroup, layerCollisionGroup]);
-            });
+            game.player.body.setCollisionGroup(game.playerCollisionGroup);
 
-            game.balls.forEach(elem=>elem.animations.add('horizontal', [0, 1]));
-            game.balls.forEach(elem=>elem.animations.add('vertical', [0, 2]));
 
             game.balls.forEach(elem=>elem.body.setCircle(32));
             game.coins.forEach(elem=>elem.body.setCircle(7, 25, 25));
 
-            game.coins.forEach(elem=>elem.body.setCollisionGroup(coinsCollisionGroup));
+            game.balls.forEach(elem=>{
+                elem.body.setCollisionGroup(game.ballsCollisionGroup);
+                elem.body.velocity.x = Math.random()*128 - 64;
+                elem.body.velocity.y = Math.random()*128 - 64;
+                elem.body.collides([game.ballsCollisionGroup, game.playerCollisionGroup, game.layerCollisionGroup]);
+                // elem.body.collides([game.ballsCollisionGroup, game.playerCollisionGroup]);
+            });
+
+            game.player.body.collides([game.layerCollisionGroup, game.ballsCollisionGroup]);
+
+            game.balls.forEach(elem=>elem.animations.add('horizontal', [0, 1]));
+            game.balls.forEach(elem=>elem.animations.add('vertical', [0, 2]));
+
+            game.coins.forEach(elem=>elem.body.setCollisionGroup(game.coinsCollisionGroup));
             // game.balls.forEach(elem=>elem.body.setCollisionGroup(ballsCollisionGroup));
-            game.treasures.forEach(elem=>elem.body.setCollisionGroup(treasuresCollisionGroup));
-            game.wallTiles.forEach(elem=>elem.body.setCollisionGroup(layerCollisionGroup));
+            game.treasures.forEach(elem=>elem.body.setCollisionGroup(game.treasuresCollisionGroup));
+            // game.wallTiles.forEach(elem=>{
+            //     elem.body.setCollisionGroup(layerCollisionGroup);
+            //     elem.body.collides([playerCollisionGroup, ballsCollisionGroup]);
+            // });
 
 
             // game.boxes.body.bounce.set(0.2);
 
-            game.player.checkWorldBounds = true;
+            // game.player.checkWorldBounds = true;
 
             game.camera.follow(game.player);
             // game.player.body.collideWorldBounds = true;
@@ -322,6 +325,7 @@ $(document).ready(()=> {
             // }
         },
         update: function() {
+            // game.player.body.collides([game.ballsCollisionGroup]);
 
             game.debug.text("Points: " + points, 32, 32);
 
