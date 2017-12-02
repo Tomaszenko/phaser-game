@@ -97,18 +97,68 @@ $(document).ready(()=> {
             game.map = game.add.tilemap('map');
             game.map.addTilesetImage('core_layer', 'core_layer');
 
+            game.physics.startSystem(Phaser.Physics.P2JS);
+
             game.layer = game.map.createLayer('core_layer');
             game.layer.resizeWorld();
 
+            game.physics.p2.restitution = 1;
+            // game.physics.p2.convertCollisionObjects(game.map, "core_layer");
+            game.physics.p2.setBoundsToWorld(true, true, true, true, false);
+
+            var playerCollisionGroup = game.physics.p2.createCollisionGroup();
+            var layerCollisionGroup = game.physics.p2.createCollisionGroup();
+            var boxesCollisionGroup = game.physics.p2.createCollisionGroup();
+            var coinsCollisionGroup = game.physics.p2.createCollisionGroup();
+            var treasuresCollisionGroup = game.physics.p2.createCollisionGroup();
+            var ballsCollisionGroup = game.physics.p2.createCollisionGroup();
+
+            game.physics.p2.updateBoundsCollisionGroup();
+
             emptyTiles = [];
+            game.wallTiles = game.add.group();
+
             console.log("Prinitng tiles");
+            
+            game.balls = game.add.group();
+            game.boxes = game.add.group();
+            game.coins = game.add.group();
+            game.treasures = game.add.group();
+            game.player = game.add.sprite(64, 64, 'herosheet');
+
+            game.wallTiles.enableBody = true;
+            game.balls.enableBody = true;
+            game.boxes.enableBody = true
+            game.coins.enableBody = true;
+            game.player.enableBody = true;
+            game.treasures.enableBody = true;
+
+
+            // game.player.physicsBodyType = Phaser.Physics.P2JS;
+            game.balls.physicsBodyType = Phaser.Physics.P2JS;
+            game.wallTiles.physicsBodyType = Phaser.Physics.P2JS;
+            game.coins.physicsBodyType = Phaser.Physics.P2JS;
+            game.treasures.physicsBodyType = Phaser.Physics.P2JS;
+
+            game.map.setCollisionBetween(1, 1, true, game.layer);
+
             game.map.forEach((tile) => {
+                console.log(tile);
                 if(tile.index === 2 && (tile.x !== playerPosition.x || tile.y !== playerPosition.y)) {
                     emptyTiles.push({"x": tile.x, "y": tile.y});
                 }
+                if(tile.index === 1) {
+                    // game.physics.p2.enable(tile);
+                    // tile.body.setCollisionGroup(layerCollisionGroup);
+                    // tile.body.collides([ballsCollisionGroup, playerCollisionGroup]);
+                }
             });
 
+            game.physics.p2.convertTilemap(game.map, game.layer);
+
             console.log(emptyTiles);
+
+            // wallTiles.setCollisionGroup(layerCollisionGroup);
 
             leftUpTiles = emptyTiles.filter((tile)=>tile.x < tilesHoriz/2 && tile.y < tilesVert/2);
             rightUpTiles = emptyTiles.filter((tile)=>tile.x >= tilesHoriz/2 && tile.y < tilesVert/2);
@@ -122,50 +172,31 @@ $(document).ready(()=> {
 
             console.log(game.world);
 
-            game.balls = game.add.group();
-            game.boxes = game.add.group();
-            game.coins = game.add.group();
-            game.treasures = game.add.group();
 
             // game.boxes.create(64,128, 'box');
             // game.coins.create(64,192, 'coin');
             // game.treasures.create(64, 256, 'treasure');
 
-            game.physics.startSystem(Phaser.Physics.P2JS);
-
-            game.physics.p2.restitution = 0.8;
-            game.physics.p2.convertTilemap(game.map, game.layer);
-            game.physics.p2.setBoundsToWorld(true, true, true, true, false);
-
-            var playerCollisionGroup = game.physics.p2.createCollisionGroup();
-            var layerCollisionGroup = game.physics.p2.createCollisionGroup();
-            var boxesCollisionGroup = game.physics.p2.createCollisionGroup();
-            var coinsCollisionGroup = game.physics.p2.createCollisionGroup();
-            var treasuresCollisionGroup = game.physics.p2.createCollisionGroup();
-            var ballsCollisionGroup = game.physics.p2.createCollisionGroup();
-
-            game.physics.p2.updateBoundsCollisionGroup();
-            game.balls.physicsBodyType = Phaser.Physics.P2JS;
-
-            // game.physics.setBoundsToWorld();
-
-            game.map.setCollisionBetween(1, 1, true, game.layer);
-
-            game.player = game.add.sprite(64, 64, 'herosheet');
-
-            game.layer.enableBody = true;
-            game.balls.enableBody = true;
-            game.boxes.enableBody = true
-            game.coins.enableBody = true;
-            game.player.enableBody = true;
-            game.treasures.enableBody = true;
 
             game.physics.p2.enable(game.player);
-            // game.physics.p2.enable(game.layer);
-            game.physics.p2.enable(game.boxes);
-            game.physics.p2.enable(game.coins);
-            game.physics.p2.enable(game.treasures);
-            game.physics.p2.enable(game.balls);            
+
+            game.player.body.setCollisionGroup(playerCollisionGroup);
+
+            game.physics.p2.updateBoundsCollisionGroup();
+
+            console.log(game.treasures);
+
+            // game.physics.p2.enable(game.boxes);
+            // game.physics.p2.enable(game.coins);
+            // game.physics.p2.enable(game.treasures);
+            // game.physics.p2.enable(game.balls);
+
+
+            console.log(game.player.body);
+
+            game.player.body.collides([layerCollisionGroup, ballsCollisionGroup]);
+
+
             // game.physics.arcade.enable(game.player);
             // game.physics.arcade.enable(game.layer);
             // game.physics.arcade.enable(game.boxes);
@@ -191,55 +222,65 @@ $(document).ready(()=> {
             console.log("Ball generation");
             leftUpTiles.forEach((tile)=> {
                 if(Math.random() < 0.03 && game.balls.length < 3) {
-                    game.balls.create(tile.x*tilesize, tile.y*tilesize, 'ball');
+                    let ball = game.balls.create(tile.x*tilesize, tile.y*tilesize, 'ball');
+                    ball.body.damping = 0;
+                    ball.body.restitution = 1;
                 }
                 if(Math.random() < 0.01) {
-                    game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
+                    let coin = game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
                 }
                 if(Math.random() < 0.005) {
-                    game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
+                    let treasure = game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
                 }
             });
 
             rightUpTiles.forEach((tile)=> {
                 if(Math.random() < 0.05 && game.balls.length < 5) {
-                    game.balls.create(tile.x*tilesize, tile.y*tilesize, 'ball');
+                    let ball = game.balls.create(tile.x*tilesize, tile.y*tilesize, 'ball');
+                    ball.body.damping = 0;
+                    ball.body.restitution = 1;
                 }
                 if(Math.random() < 0.02) {
-                    game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
+                    let coin = game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
                 }
                 if(Math.random() < 0.01) {
-                    game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
+                    let treasure = game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
                 }
             });
 
             leftDownTiles.forEach((tile)=> {
                 if(Math.random() < 0.05 && game.balls.length < 5) {
-                    game.balls.create(tile.x*tilesize, tile.y*tilesize, 'ball');
+                    let ball = game.balls.create(tile.x*tilesize, tile.y*tilesize, 'ball');
+                    ball.body.damping = 0;
+                    ball.body.restitution = 1;
                 }
                 if(Math.random() < 0.02) {
-                    game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
+                    let coin = game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
                 }
                 if(Math.random() < 0.01) {
-                    game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
+                    let treasure = game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
                 }
             });
 
             rightDownTiles.forEach((tile)=> {
                 if(Math.random() < 0.08 && game.balls.length < 8) {
-                    game.balls.create(tile.x*tilesize, tile.y*tilesize, 'ball');
+                    let ball = game.balls.create(tile.x*tilesize, tile.y*tilesize, 'ball');
+                    ball.body.damping = 0;
+                    ball.body.restitution = 1;
                 }
                 if(Math.random() < 0.05) {
-                    game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
+                    let coin = game.coins.create(tile.x*tilesize, tile.y*tilesize, 'coin');
                 }
                 if(Math.random() < 0.02) {
-                    game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
+                    let treasure = game.treasures.create(tile.x*tilesize, tile.y*tilesize, 'treasure');
                 }
             });
 
             game.balls.forEach(elem=>{
+                elem.body.setCollisionGroup(ballsCollisionGroup);
                 elem.body.velocity.x = Math.random()*128 - 64;
                 elem.body.velocity.y = Math.random()*128 - 64;
+                elem.body.collides([ballsCollisionGroup, playerCollisionGroup, layerCollisionGroup]);
             });
 
             game.balls.forEach(elem=>elem.animations.add('horizontal', [0, 1]));
@@ -247,6 +288,12 @@ $(document).ready(()=> {
 
             game.balls.forEach(elem=>elem.body.setCircle(32));
             game.coins.forEach(elem=>elem.body.setCircle(7, 25, 25));
+
+            game.coins.forEach(elem=>elem.body.setCollisionGroup(coinsCollisionGroup));
+            // game.balls.forEach(elem=>elem.body.setCollisionGroup(ballsCollisionGroup));
+            game.treasures.forEach(elem=>elem.body.setCollisionGroup(treasuresCollisionGroup));
+            game.wallTiles.forEach(elem=>elem.body.setCollisionGroup(layerCollisionGroup));
+
 
             // game.boxes.body.bounce.set(0.2);
 
